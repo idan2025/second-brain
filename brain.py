@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
-"""brain: on-demand recall over every project's Claude memory notes.
+"""brain: on-demand recall over a folder of Markdown notes (default: Claude Code memory).
 
-The memory notes (one fact per file, ~/.claude/projects/*/memory/*.md) stay
+The notes (one fact per file; default ~/.claude/projects/*/memory/*.md, or BRAIN_SRC) stay
 the source of truth; this indexes them into SQLite FTS5 with a link graph
 from their [[name]] links, answers compact queries, and logs every access so
 the web UI can show recall live. Notes are never written, only read.
@@ -38,8 +38,13 @@ HL_A, HL_B = "\x01", "\x02"
 
 
 def project_of(path):
-    p = path.split("/.claude/projects/")[1].split("/memory/")[0]
-    return p.replace("-home-pi-", "").strip("-") or p
+    # Claude Code layout: ~/.claude/projects/<project>/memory/x.md. Any other
+    # folder of notes is its own project, named by the folder it sits in.
+    if "/.claude/projects/" in path:
+        p = path.split("/.claude/projects/")[1].split("/memory/")[0]
+        p = re.sub(r"^-home-[^-]+-", "", p).strip("-")
+        return p or os.path.basename(os.path.dirname(path))
+    return os.path.basename(os.path.dirname(path)) or "notes"
 
 
 def unquote(v):

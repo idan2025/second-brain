@@ -22,7 +22,7 @@ brain orphans | check | top | index
 brain serve [PORT] [--lan]     live graph UI (127.0.0.1:7777; /3d for three.js)
 ```
 
-Put it on your PATH: `ln -s "$PWD/brain.py" ~/.local/bin/brain`.
+Install (people and AI agents): see [INSTALL.md](INSTALL.md).
 
 ## Config (environment)
 
