@@ -1,0 +1,72 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="color-scheme" content="dark">
+<title>Brain · 3D</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath fill='%23ffb347' d='M12 1.5 22 12 12 22.5 2 12z'/%3E%3Ccircle cx='12' cy='12' r='3.2' fill='%230b0d11'/%3E%3C/svg%3E">
+<link rel="stylesheet" href="/static/brain.css">
+</head>
+<body>
+<header class="top">
+  <a class="brand" href="/" aria-label="Brain home">
+    <svg class="mark" viewBox="0 0 24 24" aria-hidden="true"><path fill="#ffb347" d="M12 1.5 22 12 12 22.5 2 12z"/><circle cx="12" cy="12" r="3.2" fill="#0b0d11"/></svg>
+    <b>Brain</b><small>second brain · live recall</small>
+  </a>
+  <div class="searchbox">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
+    <label class="sr" for="search">Search notes</label>
+    <input id="search" type="search" placeholder="Search notes… name and description count most" autocomplete="off" spellcheck="false" aria-controls="results">
+    <button class="clear" type="button" aria-label="Clear search">×</button>
+    <kbd>/</kbd>
+  </div>
+  <nav class="seg" aria-label="View">
+    <a href="/">2D</a><a href="/3d" aria-current="page">3D</a>
+  </nav>
+  <div class="stats" aria-live="polite">loading…</div>
+</header>
+<main id="stage" aria-label="Memory graph">
+  <div id="chips" class="overlay" role="group" aria-label="Filter by note type"></div>
+  <div id="legend" class="overlay" role="group" aria-label="Projects"></div>
+  <div id="tools" class="overlay"></div>
+  <div id="hint">drag = orbit · wheel = zoom · right-drag = pan · click = read</div>
+  <div id="tip" role="tooltip"></div>
+  <div id="empty">No notes indexed yet.</div>
+</main>
+<aside>
+  <section id="results" hidden aria-label="Search results">
+    <div class="sh">Results <span class="cnt"></span></div>
+    <ol role="listbox"></ol>
+  </section>
+  <section id="note" hidden aria-label="Note">
+    <div class="sh">Note <span class="sp"></span><button id="note-close" class="x" type="button" aria-label="Close note (Esc)">×</button></div>
+    <div class="body">
+      <h2 id="note-title"></h2>
+      <div id="note-meta" class="meta"></div>
+      <p id="note-desc" class="desc"></p>
+      <pre id="note-body"></pre>
+      <h4 id="h-out">Links to</h4><div id="links-out" class="links"></div>
+      <h4 id="h-in">Linked from</h4><div id="links-in" class="links"></div>
+      <h4 id="h-missing">Links to notes that do not exist</h4><div id="links-missing" class="links"></div>
+      <div id="cli" class="cli"><code></code><button type="button">copy</button></div>
+    </div>
+  </section>
+  <section id="welcome" aria-label="How to use">
+    <div class="sh">Recall</div>
+    <div class="welcome">
+      <p>Every <code>brain s</code> and <code>brain g</code> lights the notes it touched, here and in the feed below.</p>
+      <p><kbd>/</kbd> search · <kbd>↑</kbd><kbd>↓</kbd> move · <kbd>Enter</kbd> open · <kbd>Esc</kbd> clear · <kbd>f</kbd> fit · click a node to read it, hover to see its neighbours.</p>
+    </div>
+  </section>
+  <section id="feed" aria-label="Recent recalls">
+    <div class="sh"><span id="live" class="live off" aria-hidden="true"></span>Recent recalls</div>
+    <div id="feed-empty" class="feed-empty">Nothing recalled yet. Try <code>brain s hub udp</code>.</div>
+    <ol aria-live="polite" aria-relevant="additions"></ol>
+  </section>
+</aside>
+<script src="/static/3d-force-graph.min.js"></script>
+<script src="/static/brain.js"></script>
+<script src="/static/view3d.js"></script>
+</body>
+</html>
