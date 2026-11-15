@@ -15,14 +15,45 @@ Point it at any folder of notes with `BRAIN_SRC`.
 ```
 brain s QUERY [-p PROJECT] [-t TYPE] [--days N] [-n N] [-v] [-w] [--json]   search
 brain g NAME [--head N]        a note and its linked notes
+brain ctx TASK [--tokens N]    context bundle for a task, within a token budget
 brain n NAME                   linked notes only
 brain ls [-p PROJECT] [-t TYPE]
 brain stale [DAYS]             old notes that talk about open/pending work
+brain dupes [THRESHOLD]        near-duplicate notes
 brain orphans | check | top | index
+brain embed                    embeddings for semantic search (optional)
+brain mcp                      MCP server on stdio, for AI tools
 brain serve [PORT] [--lan]     live graph UI (127.0.0.1:7777; /3d for three.js)
 ```
 
 Install (people and AI agents): see [INSTALL.md](INSTALL.md).
+
+## How search ranks
+
+1. Every word must match (stemmed, prefixes count). Common words like "the" and "how" are dropped.
+2. Failing that, any word.
+3. If a word is misspelt, close spellings from the notes' own vocabulary (`did you mean`).
+4. Within that: a match in the name beats the description, which beats the body. Then bm25, boosted
+   for notes many others link to (PageRank over `[[links]]`) and notes recalled often.
+5. With semantic search on, notes close in meaning are fused in (reciprocal rank fusion), so
+   "puppy" can find a note that only says "dog".
+
+## Use from AI tools (MCP)
+
+`brain mcp` is a Model Context Protocol server on stdio with four tools: `brain_search`,
+`brain_get`, `brain_context` and `brain_list`. Claude Code:
+
+```
+claude mcp add brain -- brain mcp
+```
+
+Any other MCP client (Claude Desktop, Cursor, and others) takes the same command in its JSON config:
+
+```json
+{ "mcpServers": { "brain": { "command": "brain", "args": ["mcp"] } } }
+```
+
+Tools that cannot speak MCP can run the CLI: `brain ctx "the task"` is the one call to make.
 
 ## Config (environment)
 
@@ -32,6 +63,24 @@ Install (people and AI agents): see [INSTALL.md](INSTALL.md).
 | `BRAIN_ROOT` | the script's folder | where `ui*.html` and `static/` live |
 | `BRAIN_DB` | `$BRAIN_ROOT/brain.db` | index and access log |
 | `BRAIN_PREFER_PROJECT` | none | project whose note wins when two share a name |
+| `BRAIN_EMBED` | off | `ollama:<model>` turns on semantic search, e.g. `ollama:nomic-embed-text` |
+| `BRAIN_OLLAMA` | `http://127.0.0.1:11434` | Ollama address |
+| `BRAIN_EVENTS_KEEP` | `5000` | raw access-log rows kept; per-note counts are kept forever |
+
+`BRAIN_SRC` takes several globs separated by `:` (`;` on Windows), and `**` recurses:
+`BRAIN_SRC="$HOME/notes/**/*.md:$HOME/work/*.md"`.
+
+## Semantic search (optional)
+
+Off by default; plain search never needs it. With [Ollama](https://ollama.com):
+
+```
+ollama pull nomic-embed-text
+export BRAIN_EMBED=ollama:nomic-embed-text
+brain embed            # again after notes change; only changed notes are re-embedded
+```
+
+If Ollama is down, search quietly falls back to words only.
 
 ## Web UI and auth
 
