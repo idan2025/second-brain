@@ -318,7 +318,11 @@ def index(db, force=False):
     return changed
 
 
+CODE = re.compile(r"```.*?```|`[^`\n]*`", re.S)
+
+
 def link_targets(text):
+    text = CODE.sub(" ", text)  # `[[extra_ports]]` in code is a TOML table, not a link
     out = {t.strip().lower() for t in LINK.findall(text)}
     out |= {t.lower() for t in MDLINK.findall(text)}
     return out
@@ -723,6 +727,10 @@ def tokens_of(text):
     return (len(text) + 3) // 4  # ~4 characters a token: close enough to budget by
 
 
+ANY_KEEP = 0.25  # in an any-word match, a note scoring under this share of the best is dropped
+ANY_COVER = 0.75  # ... and so is one holding fewer than this share of the words the best one holds
+
+
 def context(db, task, budget=1500, project=None, kind="ctx"):
     """What an agent should read before a task, in one call: the best notes in
     full, best first, then one line for each note they link to, never past
@@ -733,6 +741,18 @@ def context(db, task, budget=1500, project=None, kind="ctx"):
     parts, ids, used = [f"# context: {task}"], [], tokens_of(task) + 4
     if hits[0].get("suggest"):
         parts.append(f"(matched as: {hits[0]['suggest']})")
+    if hits[0]["mode"] != "all":
+        # no note has every word: a note that shares one common word ("release") with
+        # the task is noise next to the one that shares most, so keep only close seconds
+        words = [w.lower() for w in query_words(task)]
+
+        def covered(nid):
+            text = " ".join(db.execute("select name, description, body from notes where id=?", (nid,)).fetchone()).lower()
+            toks = set(re.findall(r"\w+", text))
+            return sum(1 for w in words if any(t.startswith(w) for t in toks))
+
+        top, need = hits[0]["score"], math.ceil(ANY_COVER * covered(hits[0]["id"]))
+        hits = [hits[0]] + [h for h in hits[1:] if h["score"] >= ANY_KEEP * top and covered(h["id"]) >= need]
     for h in hits:
         body = db.execute("select body from notes where id=?", (h["id"],)).fetchone()[0].strip()
         block = f"\n## {h['id']} - {h['description']}\n{body}"
@@ -937,7 +957,9 @@ STALE_WORDS = re.compile(r"\b(unmerged|not merged|still open|pending|open as of|
 def stale(db, days):
     now = time.time()
     out = []
-    for nid, desc, body, mtime in db.execute("select id, description, body, mtime from notes"):
+    for nid, desc, body, mtime, typ in db.execute("select id, description, body, mtime, type from notes"):
+        if typ in ("feedback", "user"):
+            continue  # a rule says "unmerged" about how to work, not about work left open
         age = (now - mtime) / 86400
         flags = sorted({m.group(0).lower() for m in STALE_WORDS.finditer(desc + " " + body)})
         if age > days and flags:

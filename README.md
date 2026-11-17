@@ -35,7 +35,10 @@ Install (people and AI agents): see [INSTALL.md](INSTALL.md).
 3. If a word is misspelt, close spellings from the notes' own vocabulary (`did you mean`).
 4. Within that: a match in the name beats the description, which beats the body. Then bm25, boosted
    for notes many others link to (PageRank over `[[links]]`) and notes recalled often.
-5. With semantic search on, notes close in meaning are fused in (reciprocal rank fusion), so
+5. `ctx` on an any-word match keeps only notes close to the best one (a quarter of its score and
+   three quarters of the words it holds), so one shared common word does not pull in an unrelated note.
+   Links inside `code` are not links. `stale` skips feedback and user notes (rules, not status).
+6. With semantic search on, notes close in meaning are fused in (reciprocal rank fusion), so
    "puppy" can find a note that only says "dog".
 
 ## Use from AI tools (MCP)

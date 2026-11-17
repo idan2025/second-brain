@@ -388,6 +388,18 @@ class Smarter(Base):
         full, _ = b.context(db, "deploy", budget=5000)
         self.assertIn("restore the backup", full)
 
+    def test_context_drops_a_note_that_shares_only_one_common_word(self):
+        note(self.mem, "translator", desc="translator app hebrew speech pack",
+             body="hebrew pack speech model release " * 5)
+        note(self.mem, "docker", desc="docker host", body="the release of the docker image")
+        b, db = self.brain()
+        text, ids = b.context(db, "translator hebrew pack slow first release", budget=2000)
+        self.assertEqual(ids, ["alpha/translator"])
+
+    def test_a_link_inside_code_is_not_a_link(self):
+        b, _ = self.brain()
+        self.assertEqual(b.link_targets("see [[real]] and `[[extra_ports]]` and\n```\n[[RNode]]\n```"), {"real"})
+
     def test_near_duplicates_are_found_and_distinct_notes_are_not(self):
         text = "the hub gate listens on udp port 4790 and falls back to tcp when udp does not answer"
         note(self.mem, "a", desc="x", body=text)
